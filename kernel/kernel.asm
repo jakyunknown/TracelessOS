@@ -1,24 +1,28 @@
 ; TRACELESS OS
 ; kernel/kernel.asm
-; Stage 2 — we are now the OS
+; 32 bit kernel — we own the machine
 
-[BITS 16]
+[BITS 32]
 [ORG 0x8000]
 
-    mov si, msg
-    call print
-    cli
-    hlt
+kernel_main:
+    ; Print directly to video memory
+    ; In 32 bit mode we write straight to 0xB8000
+    ; That's the VGA text buffer address
+    mov esi, msg
+    mov edi, 0xB8000        ; VGA memory
+    mov ah, 0x0A            ; color — green on black
 
-print:
+.print:
     lodsb
     or al, al
     jz .done
-    mov ah, 0x0E
-    int 0x10
-    jmp print
-.done:
-    ret
+    mov [edi], ax
+    add edi, 2
+    jmp .print
 
-msg db "TracelessOS kernel loaded.", 0x0D, 0x0A
-    db "You were never here.", 0x0D, 0x0A, 0
+.done:
+    cli
+    hlt
+
+msg db "TracelessOS kernel loaded. You were never here.", 0
