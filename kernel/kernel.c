@@ -7,6 +7,8 @@
 #define VGA_WIDTH   80
 #define VGA_HEIGHT  25
 
+#include "memory.h"
+
 // Colors
 #define BLACK   0
 #define GREEN   2
@@ -159,6 +161,24 @@ void kernel_main() {
     cursor_x = 0;
     print("  Sectors loaded: ", WHITE);
     print_int(32, GREEN);
+
+    // Init memory
+    memory_init();
+
+    cursor_y = 14;
+    cursor_x = 0;
+    print("  [ OK ] Memory manager initialized", GREEN);
+
+    cursor_y = 15;
+    cursor_x = 0;
+    print("  Heap start: ", WHITE);
+    print_hex(0x100000, GREEN);
+
+    cursor_y = 16;
+    cursor_x = 0;
+    print("  Heap size:  ", WHITE);
+    print_hex(0x100000, GREEN);
+    print(" (1MB)", WHITE);
 
     while(1) {}
 }
