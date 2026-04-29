@@ -17,18 +17,14 @@
 static int cursor_x = 0;
 static int cursor_y = 0;
 
-// =====================
 // PUT CHARACTER ON SCREEN
-// =====================
 void put_char(char c, int color, int x, int y) {
     unsigned short *vga = (unsigned short*)VGA_ADDRESS;
     unsigned short entry = (unsigned short)c | (unsigned short)(color << 8);
     vga[y * VGA_WIDTH + x] = entry;
 }
 
-// =====================
 // CLEAR SCREEN
-// =====================
 void clear_screen() {
     for (int y = 0; y < VGA_HEIGHT; y++) {
         for (int x = 0; x < VGA_WIDTH; x++) {
@@ -39,9 +35,7 @@ void clear_screen() {
     cursor_y = 0;
 }
 
-// =====================
 // PRINT STRING
-// =====================
 void print(const char *str, int color) {
     for (int i = 0; str[i] != '\0'; i++) {
         if (str[i] == '\n') {
@@ -58,9 +52,7 @@ void print(const char *str, int color) {
     }
 }
 
-// =====================
 // PRINT A FULL ROW BAR
-// =====================
 void print_bar(int color) {
     for (int x = 0; x < VGA_WIDTH; x++) {
         put_char('=', color, x, cursor_y);
@@ -69,7 +61,52 @@ void print_bar(int color) {
     cursor_x = 0;
 }
 
-// =====================
+// PRINT NUMBER
+void print_int(int n, int color) {
+    if (n < 0) {
+        print("-", color);
+        n = -n;
+    }
+    if (n == 0) {
+        print("0", color);
+        return;
+    }
+    char buf[32];
+    int i = 0;
+    while (n > 0) {
+        buf[i++] = '0' + (n % 10);
+        n /= 10;
+    }
+    // Reverse
+    char result[32];
+    for (int j = 0; j < i; j++) {
+        result[j] = buf[i - j - 1];
+    }
+    result[i] = '\0';
+    print(result, color);
+}
+
+
+// PRINT HEX
+void print_hex(unsigned int n, int color) {
+    char hex_chars[] = "0123456789ABCDEF";
+    char buf[9];
+    buf[8] = '\0';
+    for (int i = 7; i >= 0; i--) {
+        buf[i] = hex_chars[n & 0xF];
+        n >>= 4;
+    }
+    print("0x", color);
+    print(buf, color);
+}
+
+// PRINT NEWLINE
+void println(const char *str, int color) {
+    print(str, color);
+    cursor_x = 0;
+    cursor_y++;
+}
+
 // KERNEL MAIN
 void kernel_main() {
     clear_screen();
@@ -107,6 +144,21 @@ void kernel_main() {
     cursor_y = 8;
     cursor_x = 0;
     print("  [ !! ] All network traffic routed through Tor\n", RED);
+
+     cursor_y = 10;
+    cursor_x = 0;
+    print("  Kernel address: ", WHITE);
+    print_hex(0x8000, GREEN);
+
+    cursor_y = 11;
+    cursor_x = 0;
+    print("  VGA address:    ", WHITE);
+    print_hex(0xB8000, GREEN);
+
+    cursor_y = 12;
+    cursor_x = 0;
+    print("  Sectors loaded: ", WHITE);
+    print_int(32, GREEN);
 
     while(1) {}
 }
