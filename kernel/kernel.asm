@@ -43,9 +43,19 @@ print_header:
     mov ah, 0x0A            ; bright green
     call print_colored
 
+    mov esi, status2
+    mov edi, 0xB8280        ; row 6
+    mov ah, 0x0A            ; bright green
+    call print_colored
+
+    mov esi, status3
+    mov edi, 0xB8320        ; row 7
+    mov ah, 0x0A            ; bright green
+    call print_colored
+
     ; Warning
     mov esi, warning
-    mov edi, 0xB8280        ; row 6
+    mov edi, 0xB83C0        ; row 8
     mov ah, 0x0C            ; bright red
     call print_colored
 
@@ -63,7 +73,9 @@ print_colored:
     ret
 
 bar      db "================================================================================", 0
-title    db "  TRACELESS OS  //  You were never here.", 0
+title    db "  TRACELESS OS Loaded Successfully!", 0
 tagline  db "  Privacy-hardened. Anti-forensic. Armed.", 0
 status   db "  [ OK ] Kernel loaded in protected mode", 0
+status2  db "  [ Ok ] Memory initialized", 0
+status3  db "  [ Ok ] Anti-forensic layer active", 0
 warning  db "  [ !! ] All network traffic routed through Tor", 0

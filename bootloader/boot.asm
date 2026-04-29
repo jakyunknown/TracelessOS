@@ -1,33 +1,55 @@
 ; TRACELESS OS
 ; bootloader/boot.asm
-; Stage 1 — loads kernel, enters protected mode
+; Stage 1 — clean rewrite
 
 [BITS 16]
 [ORG 0x7C00]
 
 start:
+    ; Disable interrupts during setup
+    cli
+
     ; Set up segments
     xor ax, ax
     mov ds, ax
     mov es, ax
+    mov fs, ax
+    mov gs, ax
     mov ss, ax
     mov sp, 0x7C00
+
+    ; Save boot drive
+    mov [boot_drive], dl
+
+    ; Re-enable interrupts
+    sti
 
     ; Print loading message
     mov si, msg_load
     call print16
 
-    ; Load kernel from disk
-    mov ah, 0x02
-    mov al, 1
-    mov ch, 0
-    mov cl, 2
-    mov dh, 0
-    mov bx, 0x8000
+    ; Reset disk controller
+    xor ah, ah
+    mov dl, [boot_drive]
     int 0x13
     jc disk_error
 
-    ; Disable interrupts
+    ; Load kernel
+    mov ah, 0x02        ; read sectors
+    mov al, 32          ; read 32 sectors
+    mov ch, 0           ; cylinder 0
+    mov cl, 2           ; start at sector 2
+    mov dh, 0           ; head 0
+    mov dl, [boot_drive]; boot drive
+    mov bx, 0x8000      ; load to 0x8000
+    int 0x13
+    jc disk_error
+
+    ; Print success
+    mov si, msg_ok
+    call print16
+
+    ; Disable interrupts for mode switch
     cli
 
     ; Load GDT
@@ -38,7 +60,7 @@ start:
     or eax, 1
     mov cr0, eax
 
-    ; Jump into 32 bit code
+    ; Far jump to flush pipeline
     jmp 0x08:protected_mode
 
 disk_error:
@@ -47,35 +69,39 @@ disk_error:
     cli
     hlt
 
+; =====================
+; 16 BIT PRINT
+; =====================
 print16:
+    pusha
+.loop:
     lodsb
     or al, al
     jz .done
     mov ah, 0x0E
     int 0x10
-    jmp print16
+    jmp .loop
 .done:
+    popa
     ret
 
 ; =====================
-; GDT — Global Descriptor Table
-; Tells CPU how memory is laid out
+; GDT
 ; =====================
 gdt_start:
 
-gdt_null:               ; required null descriptor
-    dd 0x00000000
-    dd 0x00000000
+gdt_null:
+    dq 0
 
-gdt_code:               ; code segment
-    dw 0xFFFF           ; limit low
-    dw 0x0000           ; base low
-    db 0x00             ; base middle
-    db 10011010b        ; access byte
-    db 11001111b        ; flags + limit high
-    db 0x00             ; base high
+gdt_code:
+    dw 0xFFFF
+    dw 0x0000
+    db 0x00
+    db 10011010b
+    db 11001111b
+    db 0x00
 
-gdt_data:               ; data segment
+gdt_data:
     dw 0xFFFF
     dw 0x0000
     db 0x00
@@ -91,7 +117,6 @@ gdt_descriptor:
 
 ; =====================
 ; 32 BIT PROTECTED MODE
-; We are now a real OS
 ; =====================
 [BITS 32]
 
@@ -108,8 +133,13 @@ protected_mode:
     ; Jump to kernel
     jmp 0x8000
 
-msg_load  db "Loading TracelessOS...", 0x0D, 0x0A, 0
-msg_error db "Disk error!", 0x0D, 0x0A, 0
+; =====================
+; DATA
+; =====================
+boot_drive db 0
+msg_load   db "Loading TracelessOS...", 0x0D, 0x0A, 0
+msg_ok     db "Kernel found. Jumping to protected mode...", 0x0D, 0x0A, 0
+msg_error  db "Disk error! Cannot load kernel.", 0x0D, 0x0A, 0
 
 times 510-($-$$) db 0
 dw 0xAA55
