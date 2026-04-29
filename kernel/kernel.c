@@ -7,6 +7,7 @@
 #define VGA_WIDTH   80
 #define VGA_HEIGHT  25
 
+#include "interrupts.h"
 #include "memory.h"
 
 // Colors
@@ -109,6 +110,14 @@ void println(const char *str, int color) {
     cursor_y++;
 }
 
+// INTERRUPT HANDLER
+void isr_handler(int err, int num) {
+    cursor_y = 20;
+    cursor_x = 0;
+    print("  [ !! ] INTERRUPT: ", RED);
+    print_int(num, RED);
+}
+
 // KERNEL MAIN
 void kernel_main() {
     clear_screen();
@@ -179,6 +188,13 @@ void kernel_main() {
     print("  Heap size:  ", WHITE);
     print_hex(0x100000, GREEN);
     print(" (1MB)", WHITE);
+    
+    // Init interrupts
+    interrupts_init();
 
+    cursor_y = 17;
+    cursor_x = 0;
+    print("  [ OK ] Interrupt handler initialized", GREEN);
+    
     while(1) {}
 }

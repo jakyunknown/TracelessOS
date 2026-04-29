@@ -17,10 +17,19 @@ kernel/memory.o:
 	gcc -m32 -ffreestanding -fno-builtin -nostdlib -nostdinc \
 	    -fno-pie -c kernel/memory.c -o kernel/memory.o
 
-kernel/kernel.bin: kernel/stub.o kernel/kernel.o kernel/memory.o
+kernel/interrupts.o:
+	gcc -m32 -ffreestanding -fno-builtin -nostdlib -nostdinc \
+	    -fno-pie -c kernel/interrupts.c -o kernel/interrupts.o
+
+kernel/interrupts_asm.o:
+	nasm -f elf32 kernel/interrupts.asm -o kernel/interrupts_asm.o
+
+kernel/kernel.bin: kernel/stub.o kernel/kernel.o kernel/memory.o kernel/interrupts.o kernel/interrupts_asm.o
 	ld -m elf_i386 -T kernel/linker.ld \
 	   kernel/stub.o kernel/kernel.o kernel/memory.o \
+	   kernel/interrupts.o kernel/interrupts_asm.o \
 	   -o kernel/kernel.bin --oformat binary
+
 
 traceless.img: bootloader/boot.bin kernel/kernel.bin
 	cat bootloader/boot.bin kernel/kernel.bin > traceless.img
