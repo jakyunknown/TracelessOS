@@ -1,13 +1,14 @@
 ; TRACELESS OS
 ; kernel/stub.asm
-; Hands control from bootloader to C kernel
+; 32-bit entry point
 
 [BITS 32]
 
-extern kernel_main      ; tell assembler kernel_main is in C
-
 global _start
+extern kernel_main
+
+section .text
 
 _start:
-    call kernel_main    ; jump into C
-    hlt                 ; if C returns, halt
+    call kernel_main
+    hlt

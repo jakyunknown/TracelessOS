@@ -1,16 +1,15 @@
 // TRACELESS OS
 // kernel/memory.h
-// Memory manager
+// 64-bit memory manager
 
 #ifndef MEMORY_H
 #define MEMORY_H
 
-#define HEAP_START  0x100000    // 1MB mark — where our heap begins
-#define HEAP_SIZE   0x100000    // 1MB of heap space
+#define HEAP_START  0x200000
+#define HEAP_SIZE   0x100000
 
-void memory_init();
-void *kmalloc(unsigned int size);
-void kfree(void *ptr);
-void memory_dump();
+void  memory_init();
+void *kmalloc(unsigned long size);
+void  kfree(void *ptr);
 
 #endif

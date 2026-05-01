@@ -1,37 +1,58 @@
 ; TRACELESS OS
 ; kernel/interrupts.asm
-; Interrupt service routines
+; 64-bit interrupt handlers
 
-[BITS 32]
+[BITS 64]
 
+extern keyboard_handler
 extern isr_handler
 
 global idt_load
 global isr0
 global isr1
+global irq1
 
-; Load IDT
 idt_load:
-    mov eax, [esp+4]
-    lidt [eax]
+    lidt [rdi]
     ret
 
-; ISR 0 — Division by zero
 isr0:
     cli
-    push byte 0
-    push byte 0
+    push rax
+    mov rdi, 0
     call isr_handler
-    add esp, 8
+    pop rax
     sti
     iret
 
-; ISR 1 — Debug
 isr1:
     cli
-    push byte 0
-    push byte 1
+    push rax
+    mov rdi, 1
     call isr_handler
-    add esp, 8
+    pop rax
+    sti
+    iret
+
+irq1:
+    cli
+    push rax
+    push rbx
+    push rcx
+    push rdx
+    push rsi
+    push rdi
+
+    call keyboard_handler
+
+    mov al, 0x20
+    out 0x20, al
+
+    pop rdi
+    pop rsi
+    pop rdx
+    pop rcx
+    pop rbx
+    pop rax
     sti
     iret
